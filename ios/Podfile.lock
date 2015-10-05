@@ -1,0 +1,15 @@
+PODS:
+  - KinveyKit (1.38.0)
+  - React (0.11.0):
+    - React/Core (= 0.11.0)
+  - React/Core (0.11.0)
+
+DEPENDENCIES:
+  - KinveyKit
+  - React (~> 0.11.0)
+
+SPEC CHECKSUMS:
+  KinveyKit: 680dfb81ded986275c9ec8ad6b9bafab1ef664f7
+  React: 7701ff0adcaadbf8fa5514778c2ee41b2622cd57
+
+COCOAPODS: 0.38.2
