@@ -42,6 +42,9 @@
   BOOL foundElement = NO;
 
   __block NSString *redboxError = nil;
+
+  // um, had to hack this
+
   // RCTSetLogFunction(^(RCTLogLevel level, NSString *fileName, NSNumber *lineNumber, NSString *message) {
   //   if (level >= RCTLogLevelError) {
   //     redboxError = message;

@@ -53,7 +53,7 @@ var BadgeIdKinvey = React.createClass({
     var self = this;
 
     self.setState({
-      kinvey: 'Initializing Kinvey...'
+      kinvey: 'Initializing Kinvey...test2...'
     });
 
     Kinvey.init(config).then(function() {
@@ -66,7 +66,7 @@ var BadgeIdKinvey = React.createClass({
         kinvey: 'Pinging Kinvey....'
       });
       Kinvey.ping().then(function(response) {
-        
+
         self.setState({
           kinvey: response.kinvey
         });
