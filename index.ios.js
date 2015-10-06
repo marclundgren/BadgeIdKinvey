@@ -11,16 +11,6 @@ var config = {
   appSecret: '5b1d0379cee44a07a1a2a24198a4833a'
 };
 
-Kinvey.init(config).then(function() {
-
-  Kinvey.appKey = 'kid_W1ipX3lEDe';
-  Kinvey.appSecret = '5b1d0379cee44a07a1a2a24198a4833a';
-
-  Kinvey.ping().then(function(response) {
-    console.log('response: ', response);
-  });
-});
-
 
 var {
   AppRegistry,
@@ -76,10 +66,11 @@ var BadgeIdKinvey = React.createClass({
         kinvey: 'Pinging Kinvey....'
       });
       Kinvey.ping().then(function(response) {
+        
         self.setState({
           kinvey: response.kinvey
         });
-        
+
         // setTimeout(function() {
         //   self.setState({
         //     kinvey: response.kinvey
