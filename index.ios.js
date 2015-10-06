@@ -50,13 +50,11 @@ var BadgeIdKinvey = React.createClass({
     Kinvey.appKey = 'kid_W1ipX3lEDe';
     Kinvey.appSecret = '5b1d0379cee44a07a1a2a24198a4833a';
 
-    // debugger
     Kinvey.init({
       appKey: Kinvey.appKey,
       appSecret: Kinvey.appSecret
     })
     .then(function(initResponse) {
-      console.log('initResponse: ', initResponse);
       self.setState({
         kinvey: 'Pinging Kinvey....'
       });
@@ -66,12 +64,6 @@ var BadgeIdKinvey = React.createClass({
         self.setState({
           kinvey: response.kinvey
         });
-
-        // setTimeout(function() {
-        //   self.setState({
-        //     kinvey: response.kinvey
-        //   });
-        // }, 500);
       })
       .catch(function(error) {
         self.setState({
