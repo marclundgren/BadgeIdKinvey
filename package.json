@@ -6,7 +6,8 @@
     "start": "node_modules/react-native/packager/packager.sh"
   },
   "dependencies": {
-    "buffer": "~3.5.0",
+    "btoa": "^1.1.2",
+    "buffer": "^3.5.0",
     "crypto": "0.0.3",
     "kinvey": "^1.5.1",
     "loglevel": "^1.4.0",

@@ -1,16 +1,7 @@
 'use strict';
 
 var React = require('react-native');
-
 var Kinvey = require('./lib/kinvey');
-
-console.log('Kinvey: ', Kinvey);
-
-var config = {
-  appKey: 'kid_W1ipX3lEDe',
-  appSecret: '5b1d0379cee44a07a1a2a24198a4833a'
-};
-
 
 var {
   AppRegistry,
@@ -53,19 +44,24 @@ var BadgeIdKinvey = React.createClass({
     var self = this;
 
     self.setState({
-      kinvey: 'Initializing Kinvey...test2...'
+      kinvey: 'Initializing Kinvey...'
     });
 
-    Kinvey.init(config).then(function() {
+    Kinvey.appKey = 'kid_W1ipX3lEDe';
+    Kinvey.appSecret = '5b1d0379cee44a07a1a2a24198a4833a';
 
-      Kinvey.appKey = 'kid_W1ipX3lEDe';
-      Kinvey.appSecret = '5b1d0379cee44a07a1a2a24198a4833a';
-
-
+    // debugger
+    Kinvey.init({
+      appKey: Kinvey.appKey,
+      appSecret: Kinvey.appSecret
+    })
+    .then(function(initResponse) {
+      console.log('initResponse: ', initResponse);
       self.setState({
         kinvey: 'Pinging Kinvey....'
       });
-      Kinvey.ping().then(function(response) {
+      Kinvey.ping()
+      .then(function(response) {
 
         self.setState({
           kinvey: response.kinvey
@@ -76,6 +72,11 @@ var BadgeIdKinvey = React.createClass({
         //     kinvey: response.kinvey
         //   });
         // }, 500);
+      })
+      .catch(function(error) {
+        self.setState({
+          kinvey: 'failed to ping Kinvey: ' + error
+        });
       });
     });
   },
