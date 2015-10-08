@@ -13,6 +13,7 @@ var {
   Text,
   TextInput,
   TouchableHighlight,
+  TouchableOpacity,
   Image,
   WebView,
   ActivityIndicatorIOS,
@@ -77,6 +78,8 @@ var BadgeIdKinvey = React.createClass({
       scalesPageToFit: false,
       companyName: '',
       role: '',
+      signingUp: false,
+      signupName: ''
     };
   },
 
@@ -93,6 +96,43 @@ var BadgeIdKinvey = React.createClass({
     return Kinvey.Persitence.Net.read(request, options);
   },
 
+  showSignUp: function() {
+    console.log('clicked sign up')
+    this.setState({
+      signingUp: true
+    });
+  },
+
+  showLogin: function() {
+    this.setState({
+      signingUp: false
+    });
+  },
+
+  cancelSignUp: function() {
+    console.log('clicked sign in from sign up')
+    this.setState({
+      signingUp: false
+    });
+  },
+
+  signUp: function() {
+    var self = this;
+    console.log('clicked sign up...');
+
+    Kinvey.User.signup({
+      username: this.state.username,
+      password: this.state.password,
+      name: this.state.signupName,
+      companyName: this.state.companyName,
+    })
+    .then(function(user) {
+      console.log('signed up user!', user);
+      self.showLogin();
+    }).catch(function(error) {
+      console.log('sign up error: ', error);
+    });
+  },
   logIn: function() {
     var self = this;
 
@@ -100,7 +140,8 @@ var BadgeIdKinvey = React.createClass({
     console.log('clicked logIn...');
 
 
-    Kinvey.User.login(this.state.username, this.state.password).then(function(response) {
+    Kinvey.User.login(this.state.username, this.state.password)
+    .then(function(response) {
       console.log('response', response);
 
       console.log('fetch this photo id', response.photoId);
@@ -117,17 +158,31 @@ var BadgeIdKinvey = React.createClass({
       };
 
 
-      Kinvey.File.stream(response.photoId)
-      .then(function(file) {
-        self.setState({
-          photo: file._downloadURL,
-          username: '',
-          password: '',
-        });
+      // Kinvey.File.stream(response.photoId)
+      // .then(function(file) {
+      //   self.setState({
+      //     photo: file._downloadURL,
+      //     username: '',
+      //     password: '',
+      //   });
 
+      // })
+      // .catch(function(err) {
+      //   console.log(err);
+      // });
+
+      // test
+      console.log('querying for Bilbo Baggins...');
+      var query = new Kinvey.Query();
+      query.equalTo('name', 'Bilbo');
+      debugger
+      Kinvey.User.find(query, {
+        discover : true
+      }).then(function(user) {
+        console.log('found user!', user);
       })
-      .catch(function(err) {
-        console.log(err);
+      .catch(function(error) {
+        console.log('unable to find that user', error);
       });
 
       self.setState({
@@ -138,6 +193,9 @@ var BadgeIdKinvey = React.createClass({
         clearance: response.clearance,
         authenticated: true
       });
+    })
+    .catch(function(error) {
+      console.log('login error: ', error);
     });
 
   },
@@ -164,6 +222,8 @@ var BadgeIdKinvey = React.createClass({
     })
 
     // to make this faster...
+
+    // log in as a user
     .then(function() {
       self.setState({
         username: 'tom',
@@ -171,6 +231,10 @@ var BadgeIdKinvey = React.createClass({
       })
       self.logIn();
     });
+
+
+
+    // sign up
   },
 
   renderLogout: function() {
@@ -196,7 +260,12 @@ var BadgeIdKinvey = React.createClass({
 
   renderBadge: function() {
 
+    // http://p-fst1.pixstatic.com/5069d2d0d9127e30e40007b1._w.1500_s.fit_.jpg
+
+    var photo = this.state.photo || 'https://images.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn0.iconfinder.com%2Fdata%2Ficons%2Fthin-users-people%2F57%2Fthin-191_user_profile_avatar-512.png&f=1';
+
     return (
+
       <View style={styles.loginContainer}>
         <View style={styles.badgeTitle}>
           <Text style={styles.badgeTitleText}> {this.state.companyName} </Text>
@@ -212,16 +281,13 @@ var BadgeIdKinvey = React.createClass({
 
         <View style={styles.profilePhotoQrContainer}>
           <View style={styles.profilePhoto}>
-            <Image style={styles.profilePhotoImage} source={{uri: this.state.photo}} />
+            <Image style={styles.profilePhotoImage} source={{uri: photo}} />
           </View>
 
-          <View style={styles.qrContainer}>
-            <NetworkImage style={styles.qr} source={{uri: TEMP_QR_CODE_URL}}></NetworkImage>
-          </View>
         </View>
 
         <View style={styles.forgotContainer}>
-          <Text style={styles.greyFont}> Security Clearance Code: {this.state.clearance} </Text>
+          <Text style={styles.greyFont}> {this.state.clearance ? 'Security Clearance Code:' + this.state.clearance : ''} </Text>
         </View>
 
         <TouchableHighlight onPress={() => this.logOut()} style={styles.signin}>
@@ -260,7 +326,7 @@ var BadgeIdKinvey = React.createClass({
     // );
   },
 
-  renderLogin: function() {
+  _renderLoginInner: function() {
     var usernameReturnKeyType = 'next';
     var passwordReturnKeyType = 'go';
 
@@ -273,60 +339,167 @@ var BadgeIdKinvey = React.createClass({
     }
 
     return (
+      <View style={styles.logginInner}>
+          <View style={styles.loginHeader}>
+            <Image style={styles.loginMark} source={{uri: 'http://i.imgur.com/da4G0Io.png'}} />
+          </View>
+
+          <View style={styles.inputs}>
+            <View style={styles.inputContainer}>
+              <Image style={styles.inputUsername} source={{uri: 'http://i.imgur.com/iVVVMRX.png'}}/>
+
+              <TextInput
+                autoCorrect={false}
+                style={[styles.input, styles.whiteFont]}
+                placeholder="Username"
+                placeholderTextColor="#FFF"
+                onChangeText={(text) => this.setState({username: text})}
+                value={this.state.username}
+
+                clearTextOnFocus={true}
+                enablesReturnKeyAutomatically={true}
+                returnKeyType={usernameReturnKeyType}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Image style={styles.inputPassword} source={{uri: 'http://i.imgur.com/ON58SIG.png'}}/>
+
+              <TextInput
+                password={true}
+                style={[styles.input, styles.whiteFont]}
+                placeholder="Pasword"
+                placeholderTextColor="#FFF"
+                onChangeText={(text) => this.setState({password: text})}
+                value={this.state.password}
+
+                clearTextOnFocus={true}
+                enablesReturnKeyAutomatically={true}
+                returnKeyType={passwordReturnKeyType}
+              />
+            </View>
+
+            <View style={styles.forgotContainer}>
+              <Text style={styles.greyFont}>Forgot Password</Text>
+            </View>
+          </View>
+
+          <TouchableHighlight onPress={() => this.logIn()} style={styles.signin}>
+            <Text style={styles.whiteFont}>Sign In</Text>
+          </TouchableHighlight>
+
+          <TouchableOpacity onPress={() => this.showSignUp()} style={styles.signup}>
+            <Text style={styles.greyFont}>Dont have an account?
+            <Text style={styles.whiteFont}>  Sign Up</Text></Text>
+          </TouchableOpacity>
+        </View>
+    );
+  },
+
+  _renderSignUpInner: function() {
+    var usernameReturnKeyType = 'next';
+    var passwordReturnKeyType = 'go';
+
+    var usernameEntered = (this.state.username);
+    var passwordEntered = (this.state.password);
+    var usernameAndPasswordEntered = (usernameEntered && passwordEntered);
+
+    if (usernameAndPasswordEntered) {
+      usernameReturnKeyType = 'go';
+    }
+
+    return (
+      <View style={styles.logginInner}>
+          <View style={styles.loginHeader}>
+            <Image style={styles.loginMark} source={{uri: 'http://i.imgur.com/da4G0Io.png'}} />
+          </View>
+
+          <View style={styles.inputs}>
+            <View style={styles.inputContainer}>
+              <Image style={styles.inputUsername} source={{uri: 'http://i.imgur.com/iVVVMRX.png'}}/>
+
+              <TextInput
+                autoCorrect={false}
+                style={[styles.input, styles.whiteFont]}
+                placeholder="Username"
+                placeholderTextColor="#FFF"
+                onChangeText={(text) => this.setState({username: text})}
+                value={this.state.username}
+
+                clearTextOnFocus={true}
+                enablesReturnKeyAutomatically={true}
+                returnKeyType={usernameReturnKeyType}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Image style={styles.inputPassword} source={{uri: 'http://i.imgur.com/ON58SIG.png'}}/>
+
+              <TextInput
+                password={true}
+                style={[styles.input, styles.whiteFont]}
+                placeholder="Pasword"
+                placeholderTextColor="#FFF"
+                onChangeText={(text) => this.setState({password: text})}
+                value={this.state.password}
+
+                clearTextOnFocus={true}
+                enablesReturnKeyAutomatically={true}
+                returnKeyType={passwordReturnKeyType}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Image style={styles.inputUsername} source={{uri: 'http://i.imgur.com/iVVVMRX.png'}}/>
+
+              <TextInput
+                style={[styles.input, styles.whiteFont]}
+                placeholder="Your Name"
+                placeholderTextColor="#FFF"
+                onChangeText={(text) => this.setState({signupName: text})}
+                value={this.state.signupName}
+
+                clearTextOnFocus={true}
+                enablesReturnKeyAutomatically={true}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Image style={styles.inputUsername} source={{uri: 'http://i.imgur.com/iVVVMRX.png'}}/>
+
+              <TextInput
+                style={[styles.input, styles.whiteFont]}
+                placeholder="Your Company (optional)"
+                placeholderTextColor="#FFF"
+                onChangeText={(text) => this.setState({companyName: text})}
+                value={this.state.companyName}
+
+                clearTextOnFocus={true}
+                enablesReturnKeyAutomatically={true}
+              />
+            </View>
+
+          </View>
+
+          <TouchableHighlight onPress={() => this.signUp()} style={styles.signin}>
+            <Text style={styles.whiteFont}>Sign Up</Text>
+          </TouchableHighlight>
+
+          <TouchableOpacity onPress={() => this.showLogin()} style={styles.signup}>
+            <Text style={styles.greyFont}>Already have an account?
+            <Text style={styles.whiteFont}> Sign in </Text></Text>
+          </TouchableOpacity>
+        </View>
+    );
+  },
+
+  renderLogin: function() {
+
+    return (
       <View style={styles.loginContainer}>
         <Image style={styles.loginBg} source={{uri: 'http://i.imgur.com/xlQ56UK.jpg'}} />
 
-        <View style={styles.loginHeader}>
-          <Image style={styles.loginMark} source={{uri: 'http://i.imgur.com/da4G0Io.png'}} />
-        </View>
-
-        <View style={styles.inputs}>
-          <View style={styles.inputContainer}>
-            <Image style={styles.inputUsername} source={{uri: 'http://i.imgur.com/iVVVMRX.png'}}/>
-
-            <TextInput
-              autoCorrect={false}
-              style={[styles.input, styles.whiteFont]}
-              placeholder="Username"
-              placeholderTextColor="#FFF"
-              onChangeText={(text) => this.setState({username: text})}
-              value={this.state.username}
-
-              clearTextOnFocus={true}
-              enablesReturnKeyAutomatically={true}
-              returnKeyType={usernameReturnKeyType}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Image style={styles.inputPassword} source={{uri: 'http://i.imgur.com/ON58SIG.png'}}/>
-
-            <TextInput
-              password={true}
-              style={[styles.input, styles.whiteFont]}
-              placeholder="Pasword"
-              placeholderTextColor="#FFF"
-              onChangeText={(text) => this.setState({password: text})}
-              value={this.state.password}
-
-              clearTextOnFocus={true}
-              enablesReturnKeyAutomatically={true}
-              returnKeyType={passwordReturnKeyType}
-            />
-          </View>
-
-          <View style={styles.forgotContainer}>
-            <Text style={styles.greyFont}>Forgot Password</Text>
-          </View>
-        </View>
-
-        <TouchableHighlight onPress={() => this.logIn()} style={styles.signin}>
-          <Text style={styles.whiteFont}>Sign In</Text>
-        </TouchableHighlight>
-
-        <View style={styles.signup}>
-          <Text style={styles.greyFont}>Dont have an account?<Text style={styles.whiteFont}>  Sign Up</Text></Text>
-        </View>
+        {this.state.signingUp ? this._renderSignUpInner() : this._renderLoginInner()}
       </View>
     );
   },
@@ -491,7 +664,7 @@ var styles = StyleSheet.create({
   loginHeader: {
     justifyContent: 'center',
     alignItems: 'center',
-    flex: .5,
+    flex: .4,
     backgroundColor: 'transparent'
   },
   badgeTitle: {
@@ -542,7 +715,7 @@ var styles = StyleSheet.create({
   signup: {
     justifyContent: 'center',
     alignItems: 'center',
-    flex: .15
+    flex: .10
   },
   inputs: {
       marginTop: 10,
@@ -583,6 +756,9 @@ var styles = StyleSheet.create({
   whiteFont: {
     color: '#FFF'
   },
+  logginInner: {
+    flex: 1,
+  }
 });
 
 AppRegistry.registerComponent('BadgeIdKinvey', () => BadgeIdKinvey);
