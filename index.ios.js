@@ -5,9 +5,15 @@ var Kinvey = require('./lib/kinvey');
 var Dimensions = require('Dimensions');
 var windowSize = Dimensions.get('window');
 
-var Icon = require('react-native-vector-icons/FontAwesome');
+var FAIcon = require('react-native-vector-icons/FontAwesome');
+var MDIcon = require('react-native-vector-icons/MaterialIcons');
+var IonIcon = require('react-native-vector-icons/Ionicons');
 
-console.log(Icon);
+var CSS_KINVEY_ORANGE = '#da5024';
+var CSS_KINVEY_BLUE = '#5c89a8';
+var CSS_DISALBED_GRAY = '#666';
+
+// console.log(Icon);
 
 var {
   AppRegistry,
@@ -73,7 +79,9 @@ var BadgeIdKinvey = React.createClass({
       email: '',
       photo: null,
       kinvey: '',
-      showingBadge: true,
+      showingBadge: false,
+
+      showingEditProfile: false,
       url: 'https://m.facebook.com',
       backButtonEnabled: false,
       forwardButtonEnabled: false,
@@ -133,7 +141,13 @@ var BadgeIdKinvey = React.createClass({
     })
     .then(function(user) {
       console.log('signed up user!', user);
-      self.showLogin();
+      self.setState({
+        authenticated: true,
+        name: user.name,
+        companyName: user.companyName,
+      });
+
+      self.showHome();
     }).catch(function(error) {
       console.log('sign up error: ', error);
     });
@@ -230,13 +244,13 @@ var BadgeIdKinvey = React.createClass({
     // to make this faster...
 
     // log in as a user
-    .then(function() {
-      self.setState({
-        username: 'tom',
-        password: 'test'
-      })
-      self.logIn();
-    });
+    // .then(function() {
+    //   self.setState({
+    //     username: 'tom',
+    //     password: 'test'
+    //   })
+    //   self.logIn();
+    // });
 
 
 
@@ -266,28 +280,189 @@ var BadgeIdKinvey = React.createClass({
 
   showHome: function() {
     this.setState({
-      showingBadge: false
+      showingBadge: false,
+      showingEditProfile: false
     });
   },
   showBadge: function() {
     this.setState({
-      showingBadge: true
+      showingBadge: true,
+      showingEditProfile: false,
+    });
+  },
+  showEditProfile: function() {
+    this.setState({
+      showingEditProfile: true,
+      showingBadge: false
     });
   },
 
+  updateProfile: function() {
+    var self = this;
+
+    var user = Kinvey.getActiveUser();
+    if (this.state.newName) {
+      user.name = this.state.newName;
+    }
+    if (this.state.newCompanyName) {
+      user.companyName = this.state.newCompanyName;
+    }
+    if (this.state.newRole) {
+      user.role = this.state.newRole;
+    }
+
+    Kinvey.User.update(user).then(function() {
+
+      var newState = {};
+
+      if (self.state.newName) {
+        newState.name = self.state.newName;
+      }
+
+      if (self.state.newCompanyName) {
+        newState.companyName = self.state.newCompanyName;
+      }
+
+      if (self.state.newRole) {
+        newState.role = self.state.newRole;
+      }
+
+      self.setState(newState);
+
+      self.setState({
+        newName: '',
+        newCompanyName: '',
+        newRole: '',
+      });
+
+      self.showHome();
+    });
+
+
+  },
+
+  renderEditProfile: function() {
+    var photo = this.state.photo || 'https://images.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn0.iconfinder.com%2Fdata%2Ficons%2Fthin-users-people%2F57%2Fthin-191_user_profile_avatar-512.png&f=1';
+
+    var nameChanged = (!!this.state.newName);
+    var companyNameChanged = (!!this.state.newCompanyName);
+    var roleChanged = (!!this.state.newRole);
+
+    var canSave = nameChanged || companyNameChanged || roleChanged;
+
+        return (
+
+          <View style={styles.badgeContainer}>
+            <View style={styles.badgeHeader}>
+              <View style={styles.notificationsHomeToolbar}>
+                <View style={styles.notificationsContainer}>
+                  <IonIcon name="ios-chatbubble" size={30} style={[styles.notificationsIcon, styles.kinveyOrange]} />
+                </View>
+
+                <View style={styles.toolbarTitle}></View>
+
+                <View style={styles.homeIconContainer}>
+                  <TouchableOpacity onPress={() => this.showHome()} style={styles.signup}>
+                    <FAIcon name="home" size={30} style={styles.homeIcon} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.profilePhotoQrContainer}>
+                <View style={styles.profilePhoto}>
+                  <Image style={styles.profilePhotoImage} source={{uri: photo}} />
+                </View>
+
+                <View style={styles.taglineContainer}>
+                  <TextInput
+                    style={[styles.input, styles.userDetail, styles.tagline]}
+                    placeholder={this.state.tagline}
+                    placeholderTextColor="#eee"
+                    onChangeText={(text) => this.setState({newTagline: text})}
+                    value={this.state.newTagline}
+                  />
+                </View>
+
+              </View>
+            </View>
+
+            <View style={styles.details}>
+              <View style={styles.badgeDetailContainer}>
+                <Text style={styles.badgeDetailLabel}>
+                  NAME
+                </Text>
+
+                <TextInput
+                  style={[styles.input, styles.userDetail]}
+                  placeholder={this.state.name}
+                  placeholderTextColor="#ccc"
+                  onChangeText={(text) => this.setState({newName: text})}
+                  value={this.state.newName}
+                />
+              </View>
+              <View style={styles.badgeDetailContainer}>
+                <Text style={styles.badgeDetailLabel}>
+                  COMPANY
+                </Text>
+
+                <TextInput
+                  style={[styles.input, styles.userDetail]}
+                  placeholder={this.state.companyName}
+                  placeholderTextColor="#ccc"
+                  onChangeText={(text) => this.setState({newCompanyName: text})}
+                  value={this.state.newCompanyName}
+                />
+              </View>
+
+              <View style={styles.badgeDetailContainer}>
+                <Text style={styles.badgeDetailLabel}>
+                  ROLE
+                </Text>
+
+                <TextInput
+                  style={[styles.input, styles.userDetail]}
+                  placeholder={this.state.role}
+                  placeholderTextColor="#ccc"
+                  onChangeText={(text) => this.setState({newRole: text})}
+                  value={this.state.newRole}
+                />
+              </View>
+            </View>
+
+            {canSave ? this.renderUpdateProfile() : null}
+
+          </View>
+        );
+  },
+
+  renderUpdateProfile: function() {
+    return (
+      <TouchableHighlight onPress={() => this.updateProfile()} style={styles.updateProfile}>
+              <Text style={styles.whiteFont}>Update Profile</Text>
+            </TouchableHighlight>
+    );
+  },
+
   renderHome: function() {
+    var name = this.state.name;
+
+    if (name.split(' ').length > 0) {
+      name = name.split(' ')[0];
+    }
+
     if (this.state.showingBadge) {
       return this.renderBadge();
     }
-
-    // todo
+    else if (this.state.showingEditProfile) {
+     return this.renderEditProfile();
+    }
 
     return (
       <View style={styles.homeContainer}>
         <View style={styles.homeHeader}>
           <View style={styles.notificationsHomeToolbar}>
             <View style={styles.notificationsContainer}>
-              <Icon name="envelope-o" size={20} style={styles.notificationsIcon} />
+              <IonIcon name="ios-chatbubble" size={30} style={[styles.notificationsIcon, styles.kinveyOrange]} />
             </View>
 
             <View style={styles.toolbarTitle}></View>
@@ -295,10 +470,56 @@ var BadgeIdKinvey = React.createClass({
             <View style={styles.homeIconContainer}>
 
               <TouchableOpacity onPress={() => this.showBadge()} style={styles.signup}>
-                <Icon name="smile-o" size={20} style={styles.homeIcon} />
+                <IonIcon name="ios-person" size={30} style={styles.homeIcon} />
               </TouchableOpacity>
             </View>
           </View>
+        </View>
+
+        <View style={styles.homeBody}>
+          <View style={[styles.welcomeContainer]}>
+            <Text style={[styles.welcomeText, styles.kinveyOrange]}>HELLO, {name.toUpperCase().split(' ')[0]} </Text>
+          </View>
+
+          <View style={styles.homeNavigationItemsContainer}>
+
+            <View style={styles.homeNavigationRow}>
+              <View style={styles.homeNavigationItem}>
+                <View style={styles.homeNavigationItemIconContainer, styles.disabled}>
+                  <IonIcon style={styles.homeNavigationItemIcon} name="ios-cog-outline" size={50} />
+                </View>
+
+                <Text style={styles.homeNavigationItemText}>SETTINGS</Text>
+              </View>
+
+              <View style={styles.homeNavigationItem}>
+                <View style={[styles.homeNavigationItemIconContainer, styles.disabled]}>
+                  <IonIcon style={styles.homeNavigationItemIcon} name="ios-search" size={50} />
+                </View>
+
+                <Text style={styles.homeNavigationItemText}>SEARCH</Text>
+              </View>
+            </View>
+
+            <View style={styles.homeNavigationRow}>
+              <View style={styles.homeNavigationItem}>
+                <TouchableHighlight onPress={() => this.showEditProfile()} style={styles.homeNavigationItemIconContainer}>
+                  <IonIcon style={styles.homeNavigationItemIcon} name="ios-person-outline" size={50} />
+                </TouchableHighlight>
+
+                <Text style={styles.homeNavigationItemText}>EDIT PROFILE</Text>
+              </View>
+
+              <View style={styles.homeNavigationItem}>
+                <View style={[styles.homeNavigationItemIconContainer, styles.disabled]}>
+                  <IonIcon style={styles.homeNavigationItemIcon} name="ios-eye-outline" size={50} />
+                </View>
+
+                <Text style={styles.homeNavigationItemText}>VIEW VISITORS</Text>
+              </View>
+            </View>
+          </View>
+
         </View>
         <TouchableHighlight onPress={() => this.logOut()} style={styles.signOut}>
           <Text style={styles.whiteFont}>Sign Out</Text>
@@ -316,14 +537,14 @@ var BadgeIdKinvey = React.createClass({
         <View style={styles.badgeHeader}>
           <View style={styles.notificationsHomeToolbar}>
             <View style={styles.notificationsContainer}>
-              <Icon name="envelope-o" size={20} style={styles.notificationsIcon} />
+              <IonIcon name="ios-chatbubble" size={30} style={[styles.notificationsIcon, styles.kinveyOrange]} />
             </View>
 
             <View style={styles.toolbarTitle}></View>
 
             <View style={styles.homeIconContainer}>
               <TouchableOpacity onPress={() => this.showHome()} style={styles.signup}>
-                <Icon name="home" size={20} style={styles.homeIcon} />
+                <FAIcon name="home" size={30} style={styles.homeIcon} />
               </TouchableOpacity>
             </View>
           </View>
@@ -663,7 +884,7 @@ var styles = StyleSheet.create({
   //   flexDirection:'column'
   // },
   homeHeader: {
-    flex: 1,
+    flex: .05,
     paddingTop:30,
     paddingBottom:10,
     flexDirection:'column'
@@ -847,7 +1068,13 @@ var styles = StyleSheet.create({
   },
   signOut: {
     flex: 0.05,
-    backgroundColor: '#5c89a8',
+    backgroundColor: CSS_KINVEY_BLUE,
+    padding: 20,
+    alignItems: 'center'
+  },
+  updateProfile: {
+    flex: 0.05,
+    backgroundColor: CSS_KINVEY_BLUE,
     padding: 20,
     alignItems: 'center'
   },
@@ -922,16 +1149,21 @@ var styles = StyleSheet.create({
     paddingBottom: 20
   },
   tagline: {
-    fontWeight: '100'
+    fontWeight: '100',
+    fontStyle: 'italic'
   },
 
   badgeDetailLabel: {
     flex: 2,
-    color: '#da5024',
+    color: CSS_KINVEY_ORANGE,
     fontWeight: 'bold'
     // alignItems: 'flex-start',
     // width: 50,
     // textAlign: 'left'
+  },
+
+  kinveyOrange: {
+    color: CSS_KINVEY_ORANGE
   },
 
   userDetail: {
@@ -939,6 +1171,83 @@ var styles = StyleSheet.create({
     // alignItems: 'flex-end',
     textAlign: 'right',
     // right: 0
+  },
+
+  homeBody: {
+    flex: 1,
+    padding: 50,
+    flexDirection: 'column'
+  },
+  welcomeContainer: {
+    paddingTop: 20,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: CSS_KINVEY_ORANGE,
+    flexDirection: 'column',
+    // paddingBottom: 20
+  },
+  welcomeText: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    fontSize: 24,
+    // marginBottom: 20
+  },
+  homeNavigationItemsContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    paddingTop: 20,
+    // paddingBottom: 20,
+    flex: 1
+  },
+  homeNavigationItem: {
+    // flexDirection: 'column',
+    // flexWrap: 'wrap',
+    // alignSelf: 'flex-start',
+    alignItems: 'center',
+    flex: 0.5,
+    marginBottom: 20,
+  },
+  homeNavigationItemIconContainer: {
+    // flex: 1,
+    width: 50,
+    height: 50,
+    borderRadius: 50/2,
+    alignItems: 'center',
+    borderRadius: 50/2,
+    backgroundColor: CSS_KINVEY_BLUE,
+    marginBottom: 8
+  },
+  homeNavigationItemIcon: {
+    // width: 50,
+    // height: 50,
+    color: 'white',
+    textAlign: 'center',
+    // flex: 1,
+  },
+  homeNavigationItemText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    color: '#666'
+    // alignItems: 'center',
+    // textAlign: 'center',
+  },
+  homeNavigationRow: {
+    // paddingBottom: 20,
+    flex: 1,
+    // alignItems: ''
+    flexDirection: 'column'
+  },
+  disabled: {
+    backgroundColor: CSS_DISALBED_GRAY,
+    width: 50,
+    height: 50,
+    borderRadius: 50/2,
+    alignItems: 'center',
+    borderRadius: 50/2,
+    marginBottom: 8
   }
 });
 
