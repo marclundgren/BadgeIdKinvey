@@ -5,6 +5,10 @@ var Kinvey = require('./lib/kinvey');
 var Dimensions = require('Dimensions');
 var windowSize = Dimensions.get('window');
 
+var Icon = require('react-native-vector-icons/FontAwesome');
+
+console.log(Icon);
+
 var {
   AppRegistry,
   StyleSheet,
@@ -68,18 +72,19 @@ var BadgeIdKinvey = React.createClass({
       name: '',
       email: '',
       photo: null,
-      authenticatedAsAdmin: false,
       kinvey: '',
-
+      showingBadge: true,
       url: 'https://m.facebook.com',
       backButtonEnabled: false,
       forwardButtonEnabled: false,
       loading: true,
       scalesPageToFit: false,
       companyName: '',
+      clearance: '',
       role: '',
       signingUp: false,
-      signupName: ''
+      signupName: '',
+      tagline: ''
     };
   },
 
@@ -158,18 +163,18 @@ var BadgeIdKinvey = React.createClass({
       };
 
 
-      // Kinvey.File.stream(response.photoId)
-      // .then(function(file) {
-      //   self.setState({
-      //     photo: file._downloadURL,
-      //     username: '',
-      //     password: '',
-      //   });
+      Kinvey.File.stream(response.photoId)
+      .then(function(file) {
+        self.setState({
+          photo: file._downloadURL,
+          username: '',
+          password: '',
+        });
 
-      // })
-      // .catch(function(err) {
-      //   console.log(err);
-      // });
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
 
       // test
       console.log('querying for Bilbo Baggins...');
@@ -189,6 +194,7 @@ var BadgeIdKinvey = React.createClass({
         name: response.name,
         companyName: response.companyName,
         role: response.role,
+        tagline: response.tagline,
         // photo: response.photo,
         clearance: response.clearance,
         authenticated: true
@@ -258,41 +264,121 @@ var BadgeIdKinvey = React.createClass({
     });
   },
 
+  showHome: function() {
+    this.setState({
+      showingBadge: false
+    });
+  },
+  showBadge: function() {
+    this.setState({
+      showingBadge: true
+    });
+  },
+
+  renderHome: function() {
+    if (this.state.showingBadge) {
+      return this.renderBadge();
+    }
+
+    // todo
+
+    return (
+      <View style={styles.homeContainer}>
+        <View style={styles.homeHeader}>
+          <View style={styles.notificationsHomeToolbar}>
+            <View style={styles.notificationsContainer}>
+              <Icon name="envelope-o" size={20} style={styles.notificationsIcon} />
+            </View>
+
+            <View style={styles.toolbarTitle}></View>
+
+            <View style={styles.homeIconContainer}>
+
+              <TouchableOpacity onPress={() => this.showBadge()} style={styles.signup}>
+                <Icon name="smile-o" size={20} style={styles.homeIcon} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+        <TouchableHighlight onPress={() => this.logOut()} style={styles.signOut}>
+          <Text style={styles.whiteFont}>Sign Out</Text>
+        </TouchableHighlight>
+      </View>
+    );
+  },
+
   renderBadge: function() {
-
-    // http://p-fst1.pixstatic.com/5069d2d0d9127e30e40007b1._w.1500_s.fit_.jpg
-
     var photo = this.state.photo || 'https://images.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn0.iconfinder.com%2Fdata%2Ficons%2Fthin-users-people%2F57%2Fthin-191_user_profile_avatar-512.png&f=1';
 
     return (
 
-      <View style={styles.loginContainer}>
-        <View style={styles.badgeTitle}>
-          <Text style={styles.badgeTitleText}> {this.state.companyName} </Text>
-        </View>
+      <View style={styles.badgeContainer}>
+        <View style={styles.badgeHeader}>
+          <View style={styles.notificationsHomeToolbar}>
+            <View style={styles.notificationsContainer}>
+              <Icon name="envelope-o" size={20} style={styles.notificationsIcon} />
+            </View>
 
-        <View style={styles.name}>
-          <Text style={styles.nameText}> {this.state.name} </Text>
-        </View>
+            <View style={styles.toolbarTitle}></View>
 
-        <View style={styles.role}>
-          <Text style={styles.roleText}> {this.state.role} </Text>
-        </View>
-
-        <View style={styles.profilePhotoQrContainer}>
-          <View style={styles.profilePhoto}>
-            <Image style={styles.profilePhotoImage} source={{uri: photo}} />
+            <View style={styles.homeIconContainer}>
+              <TouchableOpacity onPress={() => this.showHome()} style={styles.signup}>
+                <Icon name="home" size={20} style={styles.homeIcon} />
+              </TouchableOpacity>
+            </View>
           </View>
 
+          <View style={styles.profilePhotoQrContainer}>
+            <View style={styles.profilePhoto}>
+              <Image style={styles.profilePhotoImage} source={{uri: photo}} />
+            </View>
+
+            <View style={styles.taglineContainer}>
+              <Text style={styles.tagline}>{this.state.tagline}</Text>
+            </View>
+
+          </View>
         </View>
 
-        <View style={styles.forgotContainer}>
-          <Text style={styles.greyFont}> {this.state.clearance ? 'Security Clearance Code:' + this.state.clearance : ''} </Text>
-        </View>
+        <View style={styles.details}>
+          <View style={styles.badgeDetailContainer}>
+            <Text style={styles.badgeDetailLabel}>
+              NAME
+            </Text>
 
-        <TouchableHighlight onPress={() => this.logOut()} style={styles.signin}>
-          <Text style={styles.whiteFont}>Sign Out</Text>
-        </TouchableHighlight>
+            <Text style={styles.userDetail}>
+              {this.state.name}
+            </Text>
+          </View>
+          <View style={styles.badgeDetailContainer}>
+            <Text style={styles.badgeDetailLabel}>
+              COMPANY
+            </Text>
+
+            <Text style={styles.userDetail}>
+              {this.state.companyName}
+            </Text>
+          </View>
+
+          <View style={styles.badgeDetailContainer}>
+            <Text style={styles.badgeDetailLabel}>
+              ROLE
+            </Text>
+
+            <Text style={styles.userDetail}>
+              {this.state.role}
+            </Text>
+          </View>
+          <View style={styles.badgeDetailContainer}>
+            <Text style={styles.badgeDetailLabel}>
+              CLEARANCE CODE
+            </Text>
+
+            <Text style={styles.userDetail}>
+              {this.state.clearance}
+            </Text>
+          </View>
+        </View>
       </View>
     );
 
@@ -340,59 +426,59 @@ var BadgeIdKinvey = React.createClass({
 
     return (
       <View style={styles.logginInner}>
-          <View style={styles.loginHeader}>
-            <Image style={styles.loginMark} source={{uri: 'http://i.imgur.com/da4G0Io.png'}} />
-          </View>
-
-          <View style={styles.inputs}>
-            <View style={styles.inputContainer}>
-              <Image style={styles.inputUsername} source={{uri: 'http://i.imgur.com/iVVVMRX.png'}}/>
-
-              <TextInput
-                autoCorrect={false}
-                style={[styles.input, styles.whiteFont]}
-                placeholder="Username"
-                placeholderTextColor="#FFF"
-                onChangeText={(text) => this.setState({username: text})}
-                value={this.state.username}
-
-                clearTextOnFocus={true}
-                enablesReturnKeyAutomatically={true}
-                returnKeyType={usernameReturnKeyType}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Image style={styles.inputPassword} source={{uri: 'http://i.imgur.com/ON58SIG.png'}}/>
-
-              <TextInput
-                password={true}
-                style={[styles.input, styles.whiteFont]}
-                placeholder="Pasword"
-                placeholderTextColor="#FFF"
-                onChangeText={(text) => this.setState({password: text})}
-                value={this.state.password}
-
-                clearTextOnFocus={true}
-                enablesReturnKeyAutomatically={true}
-                returnKeyType={passwordReturnKeyType}
-              />
-            </View>
-
-            <View style={styles.forgotContainer}>
-              <Text style={styles.greyFont}>Forgot Password</Text>
-            </View>
-          </View>
-
-          <TouchableHighlight onPress={() => this.logIn()} style={styles.signin}>
-            <Text style={styles.whiteFont}>Sign In</Text>
-          </TouchableHighlight>
-
-          <TouchableOpacity onPress={() => this.showSignUp()} style={styles.signup}>
-            <Text style={styles.greyFont}>Dont have an account?
-            <Text style={styles.whiteFont}>  Sign Up</Text></Text>
-          </TouchableOpacity>
+        <View style={styles.loginHeader}>
+          <Image style={styles.loginMark} source={{uri: 'http://i.imgur.com/da4G0Io.png'}} />
         </View>
+
+        <View style={styles.inputs}>
+          <View style={styles.inputContainer}>
+            <Image style={styles.inputUsername} source={{uri: 'http://i.imgur.com/iVVVMRX.png'}}/>
+
+            <TextInput
+              autoCorrect={false}
+              style={[styles.input, styles.whiteFont]}
+              placeholder="Username"
+              placeholderTextColor="#FFF"
+              onChangeText={(text) => this.setState({username: text})}
+              value={this.state.username}
+
+              clearTextOnFocus={true}
+              enablesReturnKeyAutomatically={true}
+              returnKeyType={usernameReturnKeyType}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Image style={styles.inputPassword} source={{uri: 'http://i.imgur.com/ON58SIG.png'}}/>
+
+            <TextInput
+              password={true}
+              style={[styles.input, styles.whiteFont]}
+              placeholder="Pasword"
+              placeholderTextColor="#FFF"
+              onChangeText={(text) => this.setState({password: text})}
+              value={this.state.password}
+
+              clearTextOnFocus={true}
+              enablesReturnKeyAutomatically={true}
+              returnKeyType={passwordReturnKeyType}
+            />
+          </View>
+
+          <View style={styles.forgotContainer}>
+            <Text style={styles.greyFont}>Forgot Password</Text>
+          </View>
+        </View>
+
+        <TouchableHighlight onPress={() => this.logIn()} style={styles.signin}>
+          <Text style={styles.whiteFont}>Sign In</Text>
+        </TouchableHighlight>
+
+        <TouchableOpacity onPress={() => this.showSignUp()} style={styles.signup}>
+          <Text style={styles.greyFont}>Dont have an account?
+          <Text style={styles.whiteFont}>  Sign Up</Text></Text>
+        </TouchableOpacity>
+      </View>
     );
   },
 
@@ -507,11 +593,9 @@ var BadgeIdKinvey = React.createClass({
   render: function() {
 
     if (this.state.authenticated) {
-      if (this.state.authenticatedAsAdmin) {
-        return this.renderScanner();
-      }
 
-      return this.renderBadge();
+
+      return this.renderHome();
     }
 
     return this.renderLogin();
@@ -547,16 +631,55 @@ var styles = StyleSheet.create({
     paddingBottom:10,
     flexDirection:'row'
   },
+  notificationsHomeToolbar:{
+    // backgroundColor:'#81c04d',
+    // paddingTop:30,
+    // paddingBottom:10,
+    flexDirection:'row'
+  },
   toolbarButton:{
     width: 50,
     color:'#fff',
     textAlign:'center'
   },
   toolbarTitle:{
-    color:'#fff',
-    textAlign:'center',
-    fontWeight:'bold',
+    // color:'#fff',
+    // textAlign:'center',
+    // fontWeight:'bold',
     flex:1
+  },
+
+  badgeHeader: {
+    backgroundColor:'#eee',
+    paddingTop:30,
+    paddingBottom:10,
+    flexDirection:'column'
+  },
+  // homeHeader: {
+  //   flex: 1,
+  //   backgroundColor:'#eee',
+  //   paddingTop:30,
+  //   paddingBottom:10,
+  //   flexDirection:'column'
+  // },
+  homeHeader: {
+    flex: 1,
+    paddingTop:30,
+    paddingBottom:10,
+    flexDirection:'column'
+  },
+
+  notificationsContainer: {
+    width: 50,
+    // color:'#fff',
+    // textAlign:'center',
+    alignItems: 'flex-start'
+  },
+  homeIconContainer: {
+    width: 50,
+    // color:'#fff',
+    // textAlign:'center',
+    alignItems: 'flex-end'
   },
 
   content:{
@@ -611,6 +734,16 @@ var styles = StyleSheet.create({
     flexDirection: 'column',
     flex: 1,
     backgroundColor: 'transparent'
+  },
+  badgeContainer: {
+    flexDirection: 'column',
+    flex: 1,
+    backgroundColor: 'transparent'
+  },
+  homeContainer: {
+    flexDirection: 'column',
+    flex: 1,
+    backgroundColor:'#eee',
   },
   loginBg: {
       backgroundColor: '#f1f1f1',
@@ -712,6 +845,12 @@ var styles = StyleSheet.create({
       padding: 20,
       alignItems: 'center'
   },
+  signOut: {
+    flex: 0.05,
+    backgroundColor: '#5c89a8',
+    padding: 20,
+    alignItems: 'center'
+  },
   signup: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -719,6 +858,11 @@ var styles = StyleSheet.create({
   },
   inputs: {
       marginTop: 10,
+      marginBottom: 10,
+      flex: .25
+  },
+  details: {
+      // marginTop: 10,
       marginBottom: 10,
       flex: .25
   },
@@ -737,6 +881,13 @@ var styles = StyleSheet.create({
       borderWidth: 1,
       borderBottomColor: '#CCC',
       borderColor: 'transparent'
+  },
+  badgeDetailContainer: {
+      padding: 10,
+      borderWidth: 0.5,
+      borderBottomColor: '#CCC',
+      borderColor: 'transparent',
+      flexDirection: 'row'
   },
   input: {
       position: 'absolute',
@@ -758,6 +909,36 @@ var styles = StyleSheet.create({
   },
   logginInner: {
     flex: 1,
+  },
+
+  notificationsIcon: {
+    paddingLeft: 10
+  },
+  homeIcon: {
+    paddingRight: 10
+  },
+  taglineContainer: {
+    paddingTop: 20,
+    paddingBottom: 20
+  },
+  tagline: {
+    fontWeight: '100'
+  },
+
+  badgeDetailLabel: {
+    flex: 2,
+    color: '#da5024',
+    fontWeight: 'bold'
+    // alignItems: 'flex-start',
+    // width: 50,
+    // textAlign: 'left'
+  },
+
+  userDetail: {
+    flex: 2,
+    // alignItems: 'flex-end',
+    textAlign: 'right',
+    // right: 0
   }
 });
 
